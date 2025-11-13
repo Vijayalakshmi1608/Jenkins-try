@@ -1,19 +1,22 @@
 pipeline {
     agent any
+    environment {
+        IMAGE = "myapp:${BUILD_NUMBER}"
+    }
     stages {
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Building...'
+                script {
+                    sh 'docker build -t myapp .'
+                }
             }
         }
-        stage('Test') {
+        stage('Push to DockerHub') {
             steps {
-                echo 'Testing...'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying...'
+                withCredentials([string(credentialsId: 'dockerhub-token', variable: 'TOKEN')]) {
+                    sh 'echo $TOKEN | docker login -u myusername --password-stdin'
+                    sh 'docker push myapp'
+                }
             }
         }
     }
